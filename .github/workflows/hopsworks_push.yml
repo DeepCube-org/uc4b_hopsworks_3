@@ -1,0 +1,29 @@
+name: Publish on new release
+
+on:
+  push:
+    tags: 
+      - '*'
+ 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    
+     - name: get the version
+       id: get_version
+       if: startsWith(github.ref, 'refs/tags/')
+       run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
+       
+     - name: Current Release
+       run:  echo ${{ steps.get_version.outputs.VERSION }}
+    
+     - name: Checkout Code
+       uses: actions/checkout@v2
+     - name: Install Requirements
+       run:  pip install -r requirements.txt
+       
+     - name: Save HOPSWORKS_SECRET_ACCESS_KEY and Push code to HopsWorks
+       run:  |
+              python create_model.py --api_key_value ${{ secrets.HOPSWORKS_SECRET_ACCESS_KEY }} --version ${{ steps.get_version.outputs.VERSION }}
+       shell: bash
